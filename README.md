@@ -141,6 +141,7 @@ If Gemini is **not configured** or fails, the app gracefully falls back to **han
 
 ---
 
+
 ## 🛠️ Tech Stack
 
 | Layer        | Technologies                                                                 |
@@ -154,30 +155,6 @@ If Gemini is **not configured** or fails, the app gracefully falls back to **han
 
 ---
 
-## 🧱 Project Structure
-
-> This is a simplified representation. Your repo may have more files.
-
-```bash
-skillspark-ai-main/
-├── server/                 # Backend (FastAPI)
-│   ├── main.py             # Main FastAPI app + Gemini logic + resume parsing
-│   ├── requirements.txt    # Python dependencies
-│   └── ...                 # venv (local only), etc.
-└── src/                    # Frontend (React)
-    ├── pages/
-    │   ├── Upload.tsx      # Resume upload & analysis UI
-    │   └── ...             # Other pages (Home, Results, RoleAdvice, etc.)
-    ├── components/
-    │   ├── Navbar.tsx
-    │   └── ui/             # shadcn-ui components, Button, Badge, etc.
-    ├── hooks/
-    │   └── use-toast.ts
-    ├── data/
-    │   └── roleConfig.ts   # RoleKey type + role-based configs
-    ├── main.tsx
-    ├── App.tsx
-    └── ...
 ## 📌 Future Enhancements
 
 🔍 Support for more resume formats & multi-page resumes.
@@ -191,7 +168,7 @@ skillspark-ai-main/
 🌐 i18n support for multiple languages.
 
 
-✨ Author
+## ✨ Author
 
 👤 Shaik Shahid
 📧 shahidshaik9898p@gmail.com
