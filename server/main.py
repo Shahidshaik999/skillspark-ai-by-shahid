@@ -19,11 +19,10 @@ origins = [
     "http://127.0.0.1:8080",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    # backend itself (not strictly needed but harmless)
+    # backend itself (optional)
     "https://skillspark-ai-by-shahid.onrender.com",
-    "https://skillspark-ai-by-shahid.vercel.app/"
-    # TODO: after frontend deploy, add your Vercel URL here, e.g.:
-    # "https://skillspark-ai-by-shahid.vercel.app",
+    # 👇 IMPORTANT: no trailing slash here
+    "https://skillspark-ai-by-shahid.vercel.app",
 ]
 
 app.add_middleware(
@@ -44,7 +43,6 @@ if GEMINI_API_KEY:
         genai.configure(api_key=GEMINI_API_KEY)
         print("✅ Gemini configured")
     except Exception:
-        # If config fails, just disable Gemini usage
         print("⚠️ Failed to configure Gemini, will use fallback only.")
         GEMINI_API_KEY = None
 else:
@@ -126,10 +124,6 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
 
 
 def looks_like_resume(text: str) -> bool:
-    """
-    Simple heuristic: require some length + at least a couple
-    of resume-ish section keywords.
-    """
     lower = text.lower()
     keyword_hits = sum(1 for kw in RESUME_KEYWORDS if kw in lower)
     return len(text) > 600 and keyword_hits >= 2
@@ -150,16 +144,12 @@ def infer_roles(skills: List[str]) -> List[str]:
 
     if "react" in s or "javascript" in s:
         roles.append("Frontend Developer")
-
     if "node.js" in s or "sql" in s or "mongodb" in s:
         roles.append("Backend Developer")
-
     if "python" in s and ("pandas" in s or "numpy" in s):
         roles.append("Data Analyst")
-
     if "machine learning" in s or "deep learning" in s:
         roles.append("Machine Learning Engineer")
-
     if "docker" in s or "aws" in s:
         roles.append("DevOps Engineer")
 
@@ -186,11 +176,6 @@ def extract_certifications(text: str) -> List[str]:
 
 
 def infer_experience_level(text: str) -> tuple[int, str]:
-    """
-    Very simple heuristic:
-    - look for "X years of experience"
-    - classify into Fresher / Junior / Mid / Senior
-    """
     lower = text.lower()
     matches = re.findall(r"(\d+)\+?\s+years?\s+of\s+experience", lower)
     years = 0
@@ -362,7 +347,6 @@ async def analyze_resume(file: UploadFile = File(...)):
     if not text.strip():
         return {"error": "Could not read any text from the file."}
 
-    # 🚫 Reject obviously non-resume files
     if not looks_like_resume(text):
         return {
             "error": (
