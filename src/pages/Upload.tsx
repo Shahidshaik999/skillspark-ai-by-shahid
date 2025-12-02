@@ -13,6 +13,13 @@ import { Navbar } from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
 import { RoleKey } from "@/data/roleConfig";
 
+// ---- API base URL ----
+// If VITE_API_BASE_URL is set, use that.
+// Otherwise default to Render backend URL.
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ??
+  "https://skillspark-ai-by-shahid.onrender.com";
+
 // ---- types for backend response ----
 interface AnalysisResponse {
   fileName?: string;
@@ -90,7 +97,7 @@ const Upload = () => {
     const timeoutId = window.setTimeout(() => controller.abort(), 15000);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/analyze-resume", {
+      const res = await fetch(`${API_BASE_URL}/analyze-resume`, {
         method: "POST",
         body: formData,
         signal: controller.signal,
@@ -142,7 +149,7 @@ const Upload = () => {
 
       if (err instanceof DOMException && err.name === "AbortError") {
         description =
-          "Server is taking too long to respond. Please check if the backend (FastAPI) is running on port 8000.";
+          "The server is taking too long to respond. Please try again in a few minutes.";
       }
 
       toast({

@@ -12,11 +12,18 @@ import google.generativeai as genai
 
 app = FastAPI()
 
+# ----------------- CORS -----------------
 origins = [
+    # local dev
     "http://localhost:8080",
     "http://127.0.0.1:8080",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    # backend itself (not strictly needed but harmless)
+    "https://skillspark-ai-by-shahid.onrender.com",
+    "https://skillspark-ai-by-shahid.vercel.app/"
+    # TODO: after frontend deploy, add your Vercel URL here, e.g.:
+    # "https://skillspark-ai-by-shahid.vercel.app",
 ]
 
 app.add_middleware(
@@ -30,13 +37,13 @@ app.add_middleware(
 # ----------------- Gemini setup -----------------
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-GEMINI_MODEL = "gemini-pro"   # safe model for most API keys
+GEMINI_MODEL = "gemini-pro"  # safe + available for most keys
 
 if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
         print("✅ Gemini configured")
-    except Exception as e:
+    except Exception:
         # If config fails, just disable Gemini usage
         print("⚠️ Failed to configure Gemini, will use fallback only.")
         GEMINI_API_KEY = None
@@ -46,11 +53,27 @@ else:
 # ----------------- simple skill DB -----------------
 
 KNOWN_SKILLS = [
-    "python", "java", "javascript", "react", "node.js", "typescript",
-    "html", "css", "sql", "mysql", "mongodb",
-    "pandas", "numpy", "machine learning", "deep learning",
-    "django", "flask", "fastapi",
-    "aws", "docker", "git",
+    "python",
+    "java",
+    "javascript",
+    "react",
+    "node.js",
+    "typescript",
+    "html",
+    "css",
+    "sql",
+    "mysql",
+    "mongodb",
+    "pandas",
+    "numpy",
+    "machine learning",
+    "deep learning",
+    "django",
+    "flask",
+    "fastapi",
+    "aws",
+    "docker",
+    "git",
 ]
 
 CERT_KEYWORDS: List[Tuple[str, str]] = [
@@ -88,7 +111,7 @@ RESUME_KEYWORDS = [
 
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
-    text = []
+    text: List[str] = []
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
         for page in pdf.pages:
             page_text = page.extract_text() or ""
@@ -103,16 +126,18 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
 
 
 def looks_like_resume(text: str) -> bool:
-    """Heuristic to reject random files / essays."""
+    """
+    Simple heuristic: require some length + at least a couple
+    of resume-ish section keywords.
+    """
     lower = text.lower()
     keyword_hits = sum(1 for kw in RESUME_KEYWORDS if kw in lower)
-    # Need some length + at least a couple of resume-ish sections
     return len(text) > 600 and keyword_hits >= 2
 
 
 def extract_skills(text: str) -> List[str]:
     lower_text = text.lower()
-    found = []
+    found: List[str] = []
     for skill in KNOWN_SKILLS:
         if skill in lower_text:
             found.append(skill.capitalize())
@@ -141,7 +166,7 @@ def infer_roles(skills: List[str]) -> List[str]:
     if not roles:
         roles.append("Software Engineer")
 
-    seen = set()
+    seen: set[str] = set()
     unique_roles: List[str] = []
     for r in roles:
         if r not in seen:
@@ -161,6 +186,11 @@ def extract_certifications(text: str) -> List[str]:
 
 
 def infer_experience_level(text: str) -> tuple[int, str]:
+    """
+    Very simple heuristic:
+    - look for "X years of experience"
+    - classify into Fresher / Junior / Mid / Senior
+    """
     lower = text.lower()
     matches = re.findall(r"(\d+)\+?\s+years?\s+of\s+experience", lower)
     years = 0
@@ -277,7 +307,6 @@ Keep it friendly, concrete and non-generic.
             return fallback_summary(skills, roles, experience_level)
         return text
     except Exception:
-        # ❌ Don't spam terminal – just quietly fall back
         return fallback_summary(skills, roles, experience_level)
 
 
