@@ -84,7 +84,7 @@ const Upload = () => {
     }
   };
 
-  // 🔥 Backend call with timeout + proper error handling
+  // 🔥 Backend call WITHOUT manual timeout / AbortController
   const handleFileUpload = async (file: File) => {
     setFileName(file.name);
     setIsAnalyzing(true);
@@ -93,14 +93,10 @@ const Upload = () => {
     const formData = new FormData();
     formData.append("file", file);
 
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 15000);
-
     try {
       const res = await fetch(`${API_BASE_URL}/analyze-resume`, {
         method: "POST",
         body: formData,
-        signal: controller.signal,
       });
 
       let data: AnalysisResponse | null = null;
@@ -126,6 +122,9 @@ const Upload = () => {
           description,
           variant: "destructive",
         });
+
+        setIsAnalyzing(false);
+        setIsAnalyzed(false);
         return;
       }
 
@@ -147,9 +146,10 @@ const Upload = () => {
       console.error(err);
       let description = "Unable to analyze resume right now.";
 
+      // Just in case some browser still throws AbortError for other reasons
       if (err instanceof DOMException && err.name === "AbortError") {
         description =
-          "The server is taking too long to respond. Please try again in a few minutes.";
+          "The request was cancelled or the server took too long. Please try again in a moment.";
       }
 
       toast({
@@ -157,9 +157,9 @@ const Upload = () => {
         description,
         variant: "destructive",
       });
-    } finally {
-      clearTimeout(timeoutId);
+
       setIsAnalyzing(false);
+      setIsAnalyzed(false);
     }
   };
 
